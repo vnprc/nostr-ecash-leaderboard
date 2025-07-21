@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🥜 Nostr Ecash Leaderboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-section {
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .status.show {
+            opacity: 1;
+        }
+
+        .status.success {
+            background: rgba(46, 204, 113, 0.1);
+            color: #27ae60;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+
+        .status.error {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .status.info {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .leaderboard {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaderboard-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .leaderboard-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .rank {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-right: 15px;
+            width: 40px;
+            text-align: center;
+            color: #667eea;
+        }
+
+        .rank.gold { color: #f39c12; }
+        .rank.silver { color: #95a5a6; }
+        .rank.bronze { color: #cd7f32; }
+
+        .emoji-col {
+            font-size: 1.8em;
+            margin-right: 20px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .note-info {
+            flex: 1;
+        }
+
+        .note-id {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .note-preview {
+            color: #333;
+            line-height: 1.4;
+            max-height: 40px;
+            overflow: hidden;
+        }
+
+        .amount {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #f39c12;
+            margin-left: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state .emoji {
+            font-size: 4em;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥜 Nostr Ecash Leaderboard</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="noteIdInput" 
+                    placeholder="Enter note ID or npub"
+                    autocomplete="off"
+                >
+                <button id="fetchButton" onclick="fetchAndProcessNote()">
+                    <span id="buttonText">Fetch</span>
+                    <div id="buttonLoading" class="loading" style="display: none;"></div>
+                </button>
+                <button onclick="clearLeaderboard()" style="background: linear-gradient(45deg, #e74c3c, #c0392b);">
+                    Clear
+                </button>
+            </div>
+            <div id="status" class="status"></div>
+            
+            <div style="margin: 20px 0; padding: 20px; background: rgba(255, 255, 255, 0.8); border-radius: 12px; text-align: center; font-size: 16px; line-height: 1.5; color: #555;">
+                <strong>Bitcoin is banked proof of work. Ecash is bitcoin wrapped in a bearer asset token.</strong><br>
+                Find out which nostr note contains the most proof of work.
+            </div>
+        </div>
+
+        <div class="leaderboard">
+            <div class="leaderboard-header">
+                🏆 Top 10 Biggest Nuts
+            </div>
+            <div class="leaderboard-content" id="leaderboardContent">
+                <div class="empty-state">
+                    <span class="emoji">🥜</span>
+                    <div>No ecash notes found yet</div>
+                    <div style="font-size: 0.9em; margin-top: 10px;">Add some notes with hidden ecash tokens!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import working libraries with correct syntax
+        import * as nip19 from 'https://esm.sh/nostr-tools@2.13.0/nip19';
+        import { SimplePool } from 'https://esm.sh/nostr-tools@2.13.0/pool';
+        import { getDecodedToken } from 'https://esm.sh/@cashu/cashu-ts@2.5.2';
+
+        // Funny titles to rotate
+        const funnyTitles = [
+            "I like Big Nuts and I Cannot Lie",
+            "The Biggest Nutter",
+            "Certified Chunky Nut Champion", 
+            "The Lord of the Nuts",
+            "Most Likely to Be Squirreled Away",
+            "King Kong Cashus",
+            "Official Oversized Nut Holder",
+            "Nutorious B.I.G.",
+            "Cashu Outside, How Bow Dah?",
+            "Nutflix Original Star",
+            "The Nutcracker Supreme",
+            "Big Nut Energy"
+        ];
+
+        // Configuration
+        const RELAYS = [
+            'wss://relay.damus.io',
+            'wss://nos.lol', 
+            'wss://relay.nostr.band',
+            'wss://nostr.bitcoiner.social'
+        ];
+        
+        const MIN_AMOUNT = 1;
+        const MAX_LEADERBOARD_SIZE = 10;
+
+        // State
+        let leaderboard = JSON.parse(localStorage.getItem('ecashLeaderboard') || '[]');
+        const pool = new SimplePool();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set random funny title
+            const randomTitle = funnyTitles[Math.floor(Math.random() * funnyTitles.length)];
+            document.querySelector('h1').textContent = `🥜 ${randomTitle}`;
+            
+            updateLeaderboardDisplay();
+            
+            document.getElementById('noteIdInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    fetchAndProcessNote();
+                }
+            });
+        });
+
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type} show`;
+            
+            setTimeout(() => {
+                status.classList.remove('show');
+            }, 5000);
+        }
+
+        function setLoading(loading) {
+            const button = document.getElementById('fetchButton');
+            const buttonText = document.getElementById('buttonText');
+            const buttonLoading = document.getElementById('buttonLoading');
+            
+            button.disabled = loading;
+            buttonText.style.display = loading ? 'none' : 'inline';
+            buttonLoading.style.display = loading ? 'inline-block' : 'none';
+        }
+
+        function normalizeInput(input) {
+            try {
+                input = input.trim().replace(/^nostr:/, '');
+                console.log('Processing input:', input);
+                
+                // Check for note1 format
+                if (input.startsWith('note1')) {
+                    const decoded = nip19.decode(input);
+                    return { type: 'noteId', noteId: decoded.data, relayHints: [] };
+                } 
+                // Check for nevent1 format
+                else if (input.startsWith('nevent1')) {
+                    const decoded = nip19.decode(input);
+                    console.log('Decoded nevent:', decoded);
+                    return { 
+                        type: 'noteId',
+                        noteId: decoded.data.id, 
+                        relayHints: decoded.data.relays || [] 
+                    };
+                }
+                // Check for npub format
+                else if (input.startsWith('npub1')) {
+                    const decoded = nip19.decode(input);
+                    console.log('Decoded npub:', decoded);
+                    return {
+                        type: 'npub',
+                        pubkey: decoded.data
+                    };
+                }
+                // Check for hex note ID
+                else if (/^[a-fA-F0-9]{64}$/.test(input)) {
+                    return { type: 'noteId', noteId: input, relayHints: [] };
+                }
+                
+                throw new Error('Invalid format');
+            } catch (error) {
+                console.error('Error in normalizeInput:', error);
+                throw new Error('Invalid input format: ' + error.message);
+            }
+        }
+
+        async function fetchNote(noteId, relayHints = []) {
+            const relaysToTry = [...relayHints, ...RELAYS].filter((relay, index, arr) => 
+                arr.indexOf(relay) === index
+            );
+            
+            console.log('Trying relays:', relaysToTry);
+            
+            try {
+                const event = await pool.get(relaysToTry, { ids: [noteId] });
+                return event;
+            } catch (error) {
+                console.error('Error fetching note:', error);
+                return null;
+            }
+        }
+
+        async function fetchUserNotes(pubkey, limit = 50) {
+            const relaysToTry = RELAYS;
+            
+            console.log('Fetching notes from pubkey:', pubkey);
+            
+            try {
+                const events = await pool.querySync(relaysToTry, {
+                    authors: [pubkey],
+                    kinds: [1], // Text notes
+                    limit: limit
+                });
+                
+                console.log(`Found ${events.length} notes from user`);
+                return events;
+            } catch (error) {
+                console.error('Error fetching user notes:', error);
+                return [];
+            }
+        }
+
+        async function processUserNotes(pubkey) {
+            showStatus('Fetching user notes...', 'info');
+            const notes = await fetchUserNotes(pubkey);
+            
+            if (notes.length === 0) {
+                showStatus('No notes found for this user', 'error');
+                return;
+            }
+            
+            showStatus(`Found ${notes.length} notes, searching for ecash tokens...`, 'info');
+            
+            let totalTokensAdded = 0;
+            let notesWithTokens = 0;
+            
+            for (const note of notes) {
+                const ecashTokens = extractEcashFromNote(note.content);
+                
+                if (ecashTokens.length > 0) {
+                    notesWithTokens++;
+                    
+                    // Add each valid token as a separate leaderboard entry
+                    for (const token of ecashTokens) {
+                        if (token.amount >= MIN_AMOUNT) {
+                            addToLeaderboard(note.id, note.content, token.amount, token.emoji, token.raw);
+                            totalTokensAdded++;
+                        }
+                    }
+                }
+            }
+            
+            if (totalTokensAdded === 0) {
+                showStatus('No valid ecash tokens found in any notes from this user', 'error');
+            } else {
+                showStatus(`Found ${totalTokensAdded} ecash tokens in ${notesWithTokens} notes!`, 'success');
+            }
+        }
+
+        function extractEcashFromNote(noteContent) {
+            console.log('Note content to search:', noteContent);
+            
+            // Look for ANY character followed by variation selectors (which indicates hidden data)
+            const charWithDataRegex = /(.[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]+)/gu;
+            
+            let match;
+            const tokens = [];
+            const processedPositions = new Set();
+            
+            while ((match = charWithDataRegex.exec(noteContent)) !== null) {
+                const charWithData = match[0];
+                const baseChar = match[1]; // Keep the full character, don't truncate
+                const position = match.index;
+                
+                // Skip if we already processed this position
+                if (processedPositions.has(position)) continue;
+                processedPositions.add(position);
+                
+                // Extract just the first character/emoji properly (handle multi-byte emojis)
+                const char = [...baseChar][0]; // Use spread operator to handle multi-byte characters correctly
+                
+                console.log(`Found character '${char}' with variation selectors:`, charWithData);
+                
+                const token = tryExtractToken(charWithData, char);
+                if (token) tokens.push(token);
+            }
+            
+            return tokens;
+        }
+
+        function tryExtractToken(charWithData, char) {
+            try {
+                // Decode the variation selectors
+                const decodedBytes = decodeVariationSelectors(charWithData);
+                console.log('Decoded bytes:', decodedBytes);
+                
+                if (decodedBytes.length === 0) return null;
+                
+                // Convert bytes to text
+                const tokenString = new TextDecoder().decode(new Uint8Array(decodedBytes));
+                console.log('Decoded token string:', tokenString);
+                
+                // Use cashu library to decode the token
+                try {
+                    const decodedToken = getDecodedToken(tokenString);
+                    console.log('Decoded cashu token:', decodedToken);
+                    
+                    // Calculate total amount from proofs (new cashu-ts structure)
+                    let totalAmount = 0;
+                    if (decodedToken.proofs && Array.isArray(decodedToken.proofs)) {
+                        decodedToken.proofs.forEach(proof => {
+                            if (proof.amount) {
+                                totalAmount += proof.amount;
+                            }
+                        });
+                    }
+                    
+                    console.log('Total amount calculated:', totalAmount);
+                    
+                    if (totalAmount > 0) {
+                        console.log(`Found valid ecash token in '${char}' with amount:`, totalAmount);
+                        return {
+                            raw: tokenString,
+                            amount: totalAmount,
+                            data: decodedToken,
+                            emoji: char
+                        };
+                    }
+                } catch (cashuError) {
+                    console.log(`Failed to parse with cashu library for '${char}':`, cashuError);
+                    return null;
+                }
+            } catch (error) {
+                console.log(`Failed to decode variation selectors for '${char}':`, error);
+                return null;
+            }
+            return null;
+        }
+
+        function decodeVariationSelectors(str) {
+            const result = [];
+            let foundFirst = false;
+            
+            for (const char of str) {
+                const codePoint = char.codePointAt(0);
+                let byte = null;
+                
+                // Check if it's a variation selector
+                if (codePoint >= 0xFE00 && codePoint <= 0xFE0F) {
+                    byte = codePoint - 0xFE00;
+                    foundFirst = true;
+                } else if (codePoint >= 0xE0100 && codePoint <= 0xE01EF) {
+                    byte = codePoint - 0xE0100 + 16;
+                    foundFirst = true;
+                } else if (foundFirst) {
+                    // Stop when we hit a non-variation selector after starting
+                    break;
+                }
+                
+                if (byte !== null) {
+                    result.push(byte);
+                }
+            }
+            
+            return result;
+        }
+
+        function addToLeaderboard(noteId, noteContent, ecashAmount, emoji, tokenRaw) {
+            // Create a unique ID using amount and timestamp to ensure uniqueness
+            const uniqueId = `${noteId}-${ecashAmount}-${emoji}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            
+            console.log('Adding to leaderboard:', { uniqueId, noteId, ecashAmount, emoji });
+            
+            const entry = {
+                id: uniqueId,
+                noteId,
+                content: noteContent.substring(0, 100) + (noteContent.length > 100 ? '...' : ''),
+                amount: ecashAmount,
+                timestamp: Date.now(),
+                emoji: emoji || '🥜',
+                tokenRaw
+            };
+            
+            // Since we're now using truly unique IDs, we should never have duplicates
+            // But let's check for duplicate token content just in case
+            const existingIndex = leaderboard.findIndex(item => 
+                item.noteId === noteId && 
+                item.tokenRaw === tokenRaw && 
+                item.amount === ecashAmount
+            );
+            
+            if (existingIndex !== -1) {
+                console.log('Duplicate token detected, skipping');
+                return;
+            } else {
+                leaderboard.push(entry);
+                console.log('Added new token to leaderboard, total entries:', leaderboard.length);
+            }
+            
+            leaderboard.sort((a, b) => b.amount - a.amount);
+            leaderboard = leaderboard.slice(0, MAX_LEADERBOARD_SIZE);
+            
+            localStorage.setItem('ecashLeaderboard', JSON.stringify(leaderboard));
+            updateLeaderboardDisplay();
+        }
+
+        function updateLeaderboardDisplay() {
+            const container = document.getElementById('leaderboardContent');
+            
+            if (leaderboard.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="emoji">🥜</span>
+                        <div>No ecash notes found yet</div>
+                        <div style="font-size: 0.9em; margin-top: 10px;">Add some notes with hidden ecash tokens!</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const html = leaderboard.map((entry, index) => {
+                const rank = index + 1;
+                const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+                const shortNoteId = entry.noteId.substring(0, 16) + '...';
+                const njumpUrl = `https://njump.me/${entry.noteId}`;
+                
+                return `
+                    <a href="${njumpUrl}" target="_blank" class="leaderboard-item">
+                        <div class="rank ${rankClass}">${rank}</div>
+                        <div class="emoji-col">${entry.emoji || '🥜'}</div>
+                        <div class="note-info">
+                            <div class="note-id">${shortNoteId}</div>
+                            <div class="note-preview">${entry.content}</div>
+                        </div>
+                        <div class="amount">${entry.amount.toLocaleString()} sats</div>
+                    </a>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        window.clearLeaderboard = function() {
+            leaderboard = [];
+            localStorage.removeItem('ecashLeaderboard');
+            updateLeaderboardDisplay();
+            showStatus('Leaderboard cleared!', 'success');
+        }
+
+        window.fetchAndProcessNote = async function() {
+            const input = document.getElementById('noteIdInput').value.trim();
+            
+            if (!input) {
+                showStatus('Please enter a note ID or npub', 'error');
+                return;
+            }
+            
+            try {
+                setLoading(true);
+                showStatus('Processing input...', 'info');
+                
+                const parsed = normalizeInput(input);
+                console.log('Parsed input:', parsed);
+                
+                if (parsed.type === 'npub') {
+                    await processUserNotes(parsed.pubkey);
+                } else {
+                    // Handle single note
+                    showStatus('Fetching note from relays...', 'info');
+                    
+                    const note = await fetchNote(parsed.noteId, parsed.relayHints);
+                    
+                    if (!note) {
+                        showStatus('Note not found on any relay', 'error');
+                        return;
+                    }
+                    
+                    console.log('Found note:', note);
+                    console.log('Note content:', note.content);
+                    showStatus('Searching for ecash tokens...', 'info');
+                    
+                    const ecashTokens = extractEcashFromNote(note.content);
+                    console.log('Found ecash tokens:', ecashTokens);
+                    
+                    if (ecashTokens.length === 0) {
+                        showStatus('No valid ecash tokens found in this note', 'error');
+                        return;
+                    }
+                    
+                    // Add each valid token as a separate leaderboard entry
+                    let tokensAdded = 0;
+                    for (const token of ecashTokens) {
+                        if (token.amount >= MIN_AMOUNT) {
+                            addToLeaderboard(parsed.noteId, note.content, token.amount, token.emoji, token.raw);
+                            tokensAdded++;
+                        }
+                    }
+                    
+                    if (tokensAdded === 0) {
+                        showStatus(`All ecash tokens (${ecashTokens.length}) are below minimum (${MIN_AMOUNT} sats)`, 'error');
+                        return;
+                    }
+                    
+                    // Update success message for single notes too
+                    if (tokensAdded === 1) {
+                        showStatus(`Found 1 ecash token!`, 'success');
+                    } else {
+                        showStatus(`Found ${tokensAdded} ecash tokens!`, 'success');
+                    }
+                }
+                
+                document.getElementById('noteIdInput').value = '';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(error.message, 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+    </script>
+</body>
+</html>
