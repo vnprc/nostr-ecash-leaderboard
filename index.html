@@ -28,6 +28,16 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+
         h1 {
             text-align: center;
             color: #333;
@@ -39,6 +49,13 @@
             background-clip: text;
         }
 
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+                margin-bottom: 20px;
+            }
+        }
+
         .input-section {
             margin-bottom: 40px;
         }
@@ -47,6 +64,14 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 600px) {
+            .input-group {
+                flex-direction: column;
+                gap: 15px;
+            }
         }
 
         input[type="text"] {
@@ -56,6 +81,14 @@
             border-radius: 12px;
             font-size: 16px;
             transition: all 0.3s ease;
+            min-width: 0; /* Important for flex shrinking */
+        }
+
+        @media (max-width: 600px) {
+            input[type="text"] {
+                width: 100%;
+                flex: none;
+            }
         }
 
         input[type="text"]:focus {
@@ -74,6 +107,15 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 600px) {
+            button {
+                width: 100%;
+                flex: none;
+            }
         }
 
         button:hover {
@@ -135,6 +177,13 @@
             font-weight: 600;
         }
 
+        @media (max-width: 768px) {
+            .leaderboard-header {
+                font-size: 1.2em;
+                padding: 15px;
+            }
+        }
+
         .leaderboard-content {
             max-height: 500px;
             overflow-y: auto;
@@ -149,6 +198,13 @@
             cursor: pointer;
             text-decoration: none;
             color: inherit;
+        }
+
+        @media (max-width: 768px) {
+            .leaderboard-item {
+                padding: 15px;
+                flex-wrap: wrap;
+            }
         }
 
         .leaderboard-item:hover {
@@ -170,6 +226,14 @@
             color: #667eea;
         }
 
+        @media (max-width: 768px) {
+            .rank {
+                font-size: 1.3em;
+                width: 30px;
+                margin-right: 10px;
+            }
+        }
+
         .rank.gold { color: #f39c12; }
         .rank.silver { color: #95a5a6; }
         .rank.bronze { color: #cd7f32; }
@@ -181,8 +245,17 @@
             text-align: center;
         }
 
+        @media (max-width: 768px) {
+            .emoji-col {
+                font-size: 1.5em;
+                margin-right: 15px;
+                width: 25px;
+            }
+        }
+
         .note-info {
             flex: 1;
+            min-width: 0; /* Important for text truncation */
         }
 
         .note-id {
@@ -192,6 +265,12 @@
             margin-bottom: 5px;
         }
 
+        @media (max-width: 768px) {
+            .note-id {
+                font-size: 0.8em;
+            }
+        }
+
         .note-preview {
             color: #333;
             line-height: 1.4;
@@ -199,11 +278,26 @@
             overflow: hidden;
         }
 
+        @media (max-width: 768px) {
+            .note-preview {
+                font-size: 0.9em;
+                max-height: 60px;
+            }
+        }
+
         .amount {
             font-size: 1.3em;
             font-weight: bold;
             color: #f39c12;
             margin-left: 20px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .amount {
+                font-size: 1.1em;
+                margin-left: 10px;
+            }
         }
 
         .empty-state {
@@ -212,10 +306,22 @@
             color: #999;
         }
 
+        @media (max-width: 768px) {
+            .empty-state {
+                padding: 40px 15px;
+            }
+        }
+
         .empty-state .emoji {
             font-size: 4em;
             margin-bottom: 20px;
             display: block;
+        }
+
+        @media (max-width: 768px) {
+            .empty-state .emoji {
+                font-size: 3em;
+            }
         }
 
         .loading {
