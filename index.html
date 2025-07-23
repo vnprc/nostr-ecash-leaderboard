@@ -581,12 +581,12 @@
         function extractEcashFromNote(noteContent) {
             console.log('Note content to search:', noteContent);
             
-            // Look for ANY character followed by variation selectors (which indicates hidden data)
-            const charWithDataRegex = /(.[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]+)/gu;
-            
-            let match;
             const tokens = [];
             const processedPositions = new Set();
+            
+            // 1. Look for ANY character followed by variation selectors (existing emoji-hidden tokens)
+            const charWithDataRegex = /(.[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]+)/gu;
+            let match;
             
             while ((match = charWithDataRegex.exec(noteContent)) !== null) {
                 const charWithData = match[0];
@@ -606,7 +606,61 @@
                 if (token) tokens.push(token);
             }
             
+            // 2. Look for bare ecash tokens (cashuA..., cashuB...)
+            const bareTokenRegex = /cashu[A-Za-z0-9+/=_-]+/g;
+            let bareMatch;
+            
+            while ((bareMatch = bareTokenRegex.exec(noteContent)) !== null) {
+                const tokenString = bareMatch[0];
+                const position = bareMatch.index;
+                
+                // Skip if we already processed this position
+                if (processedPositions.has(position)) continue;
+                processedPositions.add(position);
+                
+                console.log(`Found bare ecash token:`, tokenString);
+                
+                const token = tryParseBareToken(tokenString);
+                if (token) tokens.push(token);
+            }
+            
             return tokens;
+        }
+
+        function tryParseBareToken(tokenString) {
+            try {
+                console.log('Attempting to parse bare token:', tokenString);
+                
+                // Use cashu library to decode the token
+                const decodedToken = getDecodedToken(tokenString);
+                console.log('Decoded bare cashu token:', decodedToken);
+                
+                // Calculate total amount from proofs
+                let totalAmount = 0;
+                if (decodedToken.proofs && Array.isArray(decodedToken.proofs)) {
+                    decodedToken.proofs.forEach(proof => {
+                        if (proof.amount) {
+                            totalAmount += proof.amount;
+                        }
+                    });
+                }
+                
+                console.log('Total amount calculated for bare token:', totalAmount);
+                
+                if (totalAmount > 0) {
+                    console.log(`Found valid bare ecash token with amount:`, totalAmount);
+                    return {
+                        raw: tokenString,
+                        amount: totalAmount,
+                        data: decodedToken,
+                        emoji: 'bare' // Text indicator for bare tokens
+                    };
+                }
+            } catch (cashuError) {
+                console.log(`Failed to parse bare token:`, cashuError);
+                return null;
+            }
+            return null;
         }
 
         function tryExtractToken(charWithData, char) {
@@ -698,7 +752,7 @@
                 content: noteContent.substring(0, 100) + (noteContent.length > 100 ? '...' : ''),
                 amount: ecashAmount,
                 timestamp: Date.now(),
-                emoji: emoji || '🥜',
+                emoji: emoji,
                 tokenRaw
             };
             
@@ -745,10 +799,15 @@
                 const shortNoteId = entry.noteId.substring(0, 16) + '...';
                 const njumpUrl = `https://njump.me/${entry.noteId}`;
                 
+                const isTextEmoji = entry.emoji === 'bare';
+                const emojiDisplay = isTextEmoji ? 
+                    `<span style="font-size: 0.7em; color: #666;">${entry.emoji}</span>` : 
+                    entry.emoji;
+                
                 return `
                     <a href="${njumpUrl}" target="_blank" class="leaderboard-item">
                         <div class="rank ${rankClass}">${rank}</div>
-                        <div class="emoji-col">${entry.emoji || '🥜'}</div>
+                        <div class="emoji-col">${emojiDisplay}</div>
                         <div class="note-info">
                             <div class="note-id">${shortNoteId}</div>
                             <div class="note-preview">${entry.content}</div>
