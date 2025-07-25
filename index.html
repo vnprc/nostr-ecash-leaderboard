@@ -47,6 +47,12 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        h1:hover {
+            transform: scale(1.05);
         }
 
         @media (max-width: 768px) {
@@ -434,6 +440,16 @@
             // Set random funny title
             const randomTitle = funnyTitles[Math.floor(Math.random() * funnyTitles.length)];
             document.querySelector('h1').textContent = `🥜 ${randomTitle}`;
+            
+            // Add click handler to title for random title changes
+            document.querySelector('h1').addEventListener('click', () => {
+                const currentTitle = document.querySelector('h1').textContent.replace('🥜 ', '');
+                let newTitle;
+                do {
+                    newTitle = funnyTitles[Math.floor(Math.random() * funnyTitles.length)];
+                } while (newTitle === currentTitle && funnyTitles.length > 1);
+                document.querySelector('h1').textContent = `🥜 ${newTitle}`;
+            });
             
             updateLeaderboardDisplay();
             
