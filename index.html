@@ -537,7 +537,7 @@
             }
         }
 
-        async function fetchUserNotes(pubkey, limit = 50) {
+        async function fetchUserNotes(pubkey, limit = 500) {
             const relaysToTry = RELAYS;
             
             console.log('Fetching notes from pubkey:', pubkey);
