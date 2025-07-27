@@ -435,6 +435,27 @@
         let leaderboard = JSON.parse(localStorage.getItem('ecashLeaderboard') || '[]');
         const pool = new SimplePool();
 
+        // Check URL for automatic processing
+        function checkUrlForAutoSubmit() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const identifier = urlParams.get('q');
+            
+            if (identifier) {
+                console.log('Auto-processing from URL:', identifier);
+                
+                // Set the input field value
+                document.getElementById('noteIdInput').value = identifier;
+                
+                // Automatically submit
+                fetchAndProcessNote();
+                
+                // Clean up URL
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState({}, document.title, '/');
+                }
+            }
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             // Set random funny title
@@ -452,6 +473,9 @@
             });
             
             updateLeaderboardDisplay();
+            
+            // Check URL for automatic processing
+            checkUrlForAutoSubmit();
             
             document.getElementById('noteIdInput').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
